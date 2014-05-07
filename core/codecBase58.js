@@ -63,12 +63,13 @@ sjcl.codec.base58 = {
       n: new sjcl.bn(n)
     }
     var d = new sjcl.bn(58);
-    var powerOf58 = new sjcl.bn(1), powersOf58table = [powerOf58];
+    var powerOf58 = new sjcl.bn(1), powersOf58table = [powerOf58], power = 0;
 
     // find max power of 58 that is less than n and build a power of 58 table
     while (result.n.greaterEquals(powerOf58)) {
-      powersOf58table.push(powerOf58);
-      powerOf58 = powerOf58.mul(d);
+      powersOf58table = sjcl.codec.base58._powersOf58(power);
+      power++;
+      powerOf58 = powersOf58table[powersOf58table.length - 1];
     }
 
     while (result.n.greaterEquals(d)) {
@@ -95,16 +96,22 @@ sjcl.codec.base58 = {
   },
 
   _powersOf58: function(maxPower) {
-    var out = [
-      new sjcl.bn(1)
-    ];
-
-    for (var i=1;i<=maxPower;i++) {
-      var result = (new sjcl.bn(58)).mul(out[i-1]);
-      out.push(result);
+    if (!sjcl.codec.base58._powersOf58Cache) {
+      sjcl.codec.base58._powersOf58Cache = [new sjcl.bn(1)];
     }
 
-    return out;
+    if (sjcl.codec.base58._powersOf58Cache[maxPower]) {
+      return sjcl.codec.base58._powersOf58Cache.slice(0, maxPower + 1);
+    } else {
+      var out = sjcl.codec.base58._powersOf58Cache;
+
+      for (var i=out.length;i<=maxPower;i++) {
+        var result = (new sjcl.bn(58)).mul(out[i-1]);
+        out.push(result);
+      }
+
+      return out;
+    }
   }
 
 }
